@@ -68,10 +68,10 @@ class Particle(object):
             self.set_pos(x, y, self.orientation)
 
     def turn_left(self, angle):
-        return self.orientation = (self.orientation + (angle + gauss_noise(0, self.turning_nosie)) / 180. * math.pi) % (2 * math.pi)
+        self.orientation = (self.orientation + (angle + gauss_noise(0, self.turning_nosie)) / 180. * math.pi) % (2 * math.pi)
 
     def turn_right(self, angle):
-        return self.orientation = (self.orientation - (angle + gauss_noise(0, self.turning_nosie)) / 180. * math.pi) % (2 * math.pi)
+        self.orientation = (self.orientation - (angle + gauss_noise(0, self.turning_nosie)) / 180. * math.pi) % (2 * math.pi)
 
     def dick(self):
         return [(int(self.pos_x), int(self.pos_y)), (int(self.pos_x + self.dick_length * math.cos(self.orientation)), int(self.pos_y - self.dick_length * math.sin(self.orientation)))]

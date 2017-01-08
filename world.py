@@ -3,8 +3,8 @@ import sys
 from pygame.locals import *
 
 FPS=30
-WINDOWWIDTH = 200
-WINDOWHEIGHT = 200
+WINDOWWIDTH = 800
+WINDOWHEIGHT = 600
 COLOR = { "white": (255, 255, 255),
           "black": (0, 0, 0),
           "green": (0, 255, 0),
@@ -34,6 +34,8 @@ class World(object):
         """Draw the objects in the window"""
         for landmark in self.landmarks:
             self.pygame.draw.circle(self.window, COLOR["green"], landmark, 3)
+        pygame.draw.circle(self.window, COLOR["blue"], (int(robot.pos_x), int(robot.pos_y)), 7)
+        pygame.draw.line(self.window, COLOR["green"], *robot.dick())
 
     def test_end(self, event):
         if event.type == QUIT:
@@ -50,11 +52,11 @@ class World(object):
 
     def turn_left(self, key_pressed):
         """Test the motion command LEFT"""
-        return key_pressed[K_left]
+        return key_pressed[K_LEFT]
 
     def turn_right(self, key_pressed):
         """Test the motion command RIGHT"""
-        return key_pressed[K_right]
+        return key_pressed[K_RIGHT]
 
     def render(self, robot, particles):
         self.draw(robot, particles)
