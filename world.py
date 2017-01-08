@@ -23,7 +23,7 @@ class World(object):
         self.setup_world()
 
     def setup_world(self):
-        """Set up landmarks"""
+        """Set up landmarks, origin is the left-top point"""
         l1 = (10, 10)
         l2 = (25, 60)
         l3 = (100, 50)

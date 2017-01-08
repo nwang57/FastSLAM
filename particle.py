@@ -21,6 +21,7 @@ class Particle(object):
         self.is_robot = is_robot
         self.landmarks =[]
         self.set_noise()
+        self.weight = 1
 
 
     def set_noise(self):
@@ -76,8 +77,27 @@ class Particle(object):
     def dick(self):
         return [(int(self.pos_x), int(self.pos_y)), (int(self.pos_x + self.dick_length * math.cos(self.orientation)), int(self.pos_y - self.dick_length * math.sin(self.orientation)))]
 
+    def update(self, obs):
+        """After the motion, update the weight of the particle and its EKFs based on the sensor data"""
+        for o in obs:
+            prob = 0
+            if self.landmarks:
+                for landmark in self.landmarks:
+                    # find the data association with ML
+                    # update corresponding EKF
+                    # prob =
+            else: # no initial landmarks
+                x, y = guess_landmark(self.pos_x, self.pos_y, obs)
+                landmark = Landmark(x, y)
+                self.landmarks.append(landmark)
+                # prob
+            self.weight *= prob
+
     def sense(self, landmarks):
-        """Given the existing landmarks, generates a random number of obs (distance, direction)"""
+        """
+        Only for robot.
+        Given the existing landmarks, generates a random number of obs (distance, direction)
+        """
         num_obs = random.randint(1, len(landmarks)-1)
         obs_list = []
         for i in random.sample(range(len(landmarks)), num_obs):
@@ -89,8 +109,8 @@ class Particle(object):
             obs_list.append((dis, direction))
         return obs_list
 
-    def update_landmarks(self):
-        pass
+    def update_landmarks(self, obs):
+
 
 
 
