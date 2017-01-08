@@ -3,8 +3,8 @@ import sys
 from pygame.locals import *
 
 FPS=30
-WINDOWWIDTH = 800
-WINDOWHEIGHT = 600
+WINDOWWIDTH = 200
+WINDOWHEIGHT = 200
 COLOR = { "white": (255, 255, 255),
           "black": (0, 0, 0),
           "green": (0, 255, 0),

@@ -78,14 +78,14 @@ class Particle(object):
 
     def sense(self, landmarks):
         """Given the existing landmarks, generates a random number of obs (distance, direction)"""
-        num_obs = random.randint(0, len(landmarks)-1)
+        num_obs = random.randint(1, len(landmarks)-1)
         obs_list = []
-        for i in random.sample(num_obs, range(len(landmarks))):
+        for i in random.sample(range(len(landmarks)), num_obs):
             l = landmarks[i]
             dis = euclidean_distance(l, (self.pos_x, self.pos_y))
             if (dis + gauss_noise(0, self.distance_noise)) > 0:
                 dis = (dis + gauss_noise(0, self.distance_noise))
-            direction = cal_direction((self.pos_x, self.pos_y), l)
+            direction = cal_direction((self.pos_x, -self.pos_y), (l[0], -l[1]))
             obs_list.append((dis, direction))
         return obs_list
 

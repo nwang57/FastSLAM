@@ -10,4 +10,4 @@ def euclidean_distance(a, b):
 
 def cal_direction(a, b):
     """Calculate the angle of the vector a to b, [0, 2*pi)"""
-    return (math.atan2(b[0]-a[0], b[1]-a[1]) + 2 * math.pi) % (2 * math.pi)
+    return (math.atan2(b[1]-a[1], b[0]-a[0]) + 2 * math.pi) % (2 * math.pi)
