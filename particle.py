@@ -23,6 +23,8 @@ class Particle(object):
         self.set_noise()
         self.weight = 1
 
+    def pos(self):
+        return (self.pos_x, self.pos_y)
 
     def set_noise(self):
         if self.is_robot:
@@ -37,12 +39,15 @@ class Particle(object):
             self.turning_nosie = 5 # unit: degree
 
     def set_pos(self, x, y, orien):
-        if x >= WINDOWWIDTH:
-            x = WINDOWWIDTH - 1
-        if y >= WINDOWHEIGHT:
-            y = WINDOWHEIGHT - 1
+        """The arguments x, y are associated with the origin on the top left, we need to transform the coordinates
+        so that the origin is at bottom left.
+        """
+        if x > WINDOWWIDTH:
+            x = WINDOWWIDTH
+        if y > WINDOWHEIGHT:
+            y = WINDOWHEIGHT
         self.pos_x = x
-        self.pos_y = y
+        self.pos_y = WINDOWHEIGHT - y
         self.orientation = orien
 
     def reset_pos(self):
@@ -58,7 +63,7 @@ class Particle(object):
            Moves robot forward of distance d plus gaussian noise
         """
         x = self.pos_x + d * math.cos(self.orientation) + gauss_noise(0, self.motion_noise)
-        y = self.pos_y - d * math.sin(self.orientation) + gauss_noise(0, self.motion_noise)
+        y = self.pos_y + d * math.sin(self.orientation) + gauss_noise(0, self.motion_noise)
         if self.check_pos(x, y):
             if self.is_robot:
                 return
@@ -66,7 +71,8 @@ class Particle(object):
                 self.reset_pos()
                 return
         else:
-            self.set_pos(x, y, self.orientation)
+            self.pos_x = x
+            self.pos_y = y
 
     def turn_left(self, angle):
         self.orientation = (self.orientation + (angle + gauss_noise(0, self.turning_nosie)) / 180. * math.pi) % (2 * math.pi)
@@ -75,7 +81,7 @@ class Particle(object):
         self.orientation = (self.orientation - (angle + gauss_noise(0, self.turning_nosie)) / 180. * math.pi) % (2 * math.pi)
 
     def dick(self):
-        return [(int(self.pos_x), int(self.pos_y)), (int(self.pos_x + self.dick_length * math.cos(self.orientation)), int(self.pos_y - self.dick_length * math.sin(self.orientation)))]
+        return [(self.pos_x, self.pos_y), (self.pos_x + self.dick_length * math.cos(self.orientation), self.pos_y + self.dick_length * math.sin(self.orientation))]
 
     def update(self, obs):
         """After the motion, update the weight of the particle and its EKFs based on the sensor data"""
@@ -83,6 +89,7 @@ class Particle(object):
             prob = 0
             if self.landmarks:
                 for landmark in self.landmarks:
+                    continue
                     # find the data association with ML
                     # update corresponding EKF
                     # prob =
@@ -101,16 +108,17 @@ class Particle(object):
         num_obs = random.randint(1, len(landmarks)-1)
         obs_list = []
         for i in random.sample(range(len(landmarks)), num_obs):
-            l = landmarks[i]
+            l = landmarks[i].pos()
             dis = euclidean_distance(l, (self.pos_x, self.pos_y))
-            if (dis + gauss_noise(0, self.distance_noise)) > 0:
-                dis = (dis + gauss_noise(0, self.distance_noise))
-            direction = cal_direction((self.pos_x, -self.pos_y), (l[0], -l[1]))
+            noise = gauss_noise(0, self.distance_noise)
+            if (dis + noise) > 0:
+                dis += noise
+            direction = cal_direction((self.pos_x, self.pos_y), (l[0], l[1]))
             obs_list.append((dis, direction))
         return obs_list
 
     def update_landmarks(self, obs):
-
+        pass
 
 
 
