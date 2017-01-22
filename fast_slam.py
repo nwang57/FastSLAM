@@ -24,11 +24,17 @@ class FastSlam(object):
             key_pressed = self.world.pygame.key.get_pressed()
             if self.world.move_forward(key_pressed):
                 self.robot.forward(1)
+                obs = robot.sense(self.world.landmarks)
+                robot.update(obs)
+                # resample particles
             if self.world.turn_left(key_pressed):
                 self.robot.turn_left(5)
             if self.world.turn_right(key_pressed):
                 self.robot.turn_right(5)
             self.world.render(self.robot, self.particles)
+
+    def resample_particles(self):
+        pass
 
 if __name__=="__main__":
     simulator = FastSlam()

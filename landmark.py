@@ -12,3 +12,12 @@ class Landmark(object):
 
     def pos(self):
         return (self.pos_x, self.pos_y)
+
+    def update(self, mu, sig):
+        self.mu = mu
+        self.sig = sig
+        self.pos_x = self.mu[0][0]
+        self.pos_y = self.mu[1][0]
+
+    def __str__(self):
+        return str(self.pos())

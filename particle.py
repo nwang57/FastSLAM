@@ -4,11 +4,16 @@
 
 import random
 import math
+import numpy as np
 from slam_helper import *
+from scipy import linalg
 from world import WINDOWWIDTH, WINDOWHEIGHT
+from landmark import Landmark
 
 class Particle(object):
     """Represents the robot and particles"""
+    TOL = 1E-5
+
     def __init__(self, is_robot=False):
         """pos_x: from left to right
            pos_y: from up to down
@@ -22,6 +27,7 @@ class Particle(object):
         self.landmarks =[]
         self.set_noise()
         self.weight = 1
+        self.obs_noise = np.zeros((2,2))
 
     def pos(self):
         return (self.pos_x, self.pos_y)
@@ -87,16 +93,22 @@ class Particle(object):
         """After the motion, update the weight of the particle and its EKFs based on the sensor data"""
         for o in obs:
             prob = 0
+            ass_obs = np.zeros((2,1))
+            ass_jacobian = np.zeros((2,2))
+            ass_adjcov = np.zeros((2,2))
+            landmark_idx = -1
             if self.landmarks:
-                for landmark in self.landmarks:
-                    continue
-                    # find the data association with ML
+                # find the data association with ML
+                prob, landmark_idx, ass_obs, ass_jacobian, ass_adjcov = self.find_data_association(o)
+                if prob < TOL:
+                    # create new landmark
+                    self.create_landmark(o)
+                else:
                     # update corresponding EKF
-                    # prob =
-            else: # no initial landmarks
-                x, y = guess_landmark(self.pos_x, self.pos_y, obs)
-                landmark = Landmark(x, y)
-                self.landmarks.append(landmark)
+                    self.update_landmark(np.transpose(np.array([o])), landmark_idx, ass_obs, ass_jacobian, ass_adjcov)
+            else:
+                # no initial landmarks
+                self.create_landmark(o)
                 # prob
             self.weight *= prob
 
@@ -105,7 +117,7 @@ class Particle(object):
         Only for robot.
         Given the existing landmarks, generates a random number of obs (distance, direction)
         """
-        num_obs = random.randint(1, len(landmarks)-1)
+        num_obs = random.randint(1, len(landmarks))
         obs_list = []
         for i in random.sample(range(len(landmarks)), num_obs):
             l = landmarks[i].pos()
@@ -117,8 +129,54 @@ class Particle(object):
             obs_list.append((dis, direction))
         return obs_list
 
-    def update_landmarks(self, obs):
-        pass
+    def compute_jacobians(self, landmark):
+        dx = landmark.pos_x - self.pos_x
+        dy = landmark.pos_y - self.pos_y
+        d2 = dx**2 + dy**2
+        d = math.sqrt(d2)
+
+        predicted_obs = np.array([[d],[(math.atan2(dy, dx) + 2 * math.pi) % (2 * math.pi)]])
+        jacobian = np.array([[dx/d,   dy/d],
+                             [-dy/d2, dx/d2]])
+        adj_cov = jacobian.dot(landmark.sig).dot(np.transpose(jacobian)) + self.obs_noise
+        return predicted_obs, jacobian, adj_cov
+
+    def guess_landmark(self, obs):
+        """Based on the particle position and observation, guess the location of the landmark. Origin at top left"""
+        distance, direction = obs
+        lm_x = self.pos_x + distance * math.cos(direction)
+        lm_y = self.pos_y + distance * math.sin(direction)
+        return Landmark(lm_x, lm_y)
+
+    def find_data_association(self, obs):
+        """Using maximum likelihood to find data association"""
+        prob = 0
+        ass_obs = np.zeros((2,1))
+        ass_jacobian = np.zeros((2,2))
+        ass_adjcov = np.zeros((2,2))
+        landmark_idx = -1
+        for idx, landmark in enumerate(self.landmarks):
+            predicted_obs, jacobian, adj_cov = self.compute_jacobians(landmark)
+            p = multi_normal(np.transpose(np.array([obs])), predicted_obs, adj_cov)
+            if p > prob:
+                prob = p
+                ass_obs = predicted_obs
+                ass_jacobian = jacobian
+                ass_adjcov = adj_cov
+                landmark_idx = idx
+        return prob, landmark_idx, ass_obs, ass_jacobian, ass_adjcov
+
+    def create_landmark(self, obs):
+        landmark = guess_landmark(self.pos_x, self.pos_y, obs)
+        self.landmarks.append(landmark)
+
+    def update_landmark(self, obs, landmark_idx, ass_obs, ass_jacobian, ass_adjcov):
+        landmark = self.landmarks[landmark_idx]
+        K = landmark.sig.dot(np.transpose(ass_jacobian)).dot(linalg.inv(ass_adjcov))
+        new_mu = landmark.mu + K.dot(obs - ass_obs)
+        new_sig = (np.eye(2) - K.dot(ass_jacobian)).dot(landmark.sig)
+        landmark.update(new_mu, new_sig)
+
 
 
 
