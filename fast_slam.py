@@ -5,6 +5,7 @@
     to estimate the robot path as well as the landmarks locations.
 """
 import sys
+import random
 from world import World
 from particle import Particle
 
@@ -24,8 +25,13 @@ class FastSlam(object):
             key_pressed = self.world.pygame.key.get_pressed()
             if self.world.move_forward(key_pressed):
                 self.robot.forward(1)
-                obs = robot.sense(self.world.landmarks)
-                robot.update(obs)
+                obs = self.robot.sense(self.world.landmarks)
+                self.robot.update(obs)
+                for l in self.robot.landmarks:
+                    print l
+                    print l.sig
+                    print
+                print
                 # resample particles
             if self.world.turn_left(key_pressed):
                 self.robot.turn_left(5)
@@ -37,5 +43,6 @@ class FastSlam(object):
         pass
 
 if __name__=="__main__":
+    random.seed(5)
     simulator = FastSlam()
     simulator.run_simulation()

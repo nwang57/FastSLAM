@@ -8,7 +8,7 @@ class Landmark(object):
         self.pos_x = x
         self.pos_y = y
         self.mu = np.array([[self.pos_x],[self.pos_y]])
-        self.sig = np.eye(2) * 999
+        self.sig = np.eye(2) * 99
 
     def pos(self):
         return (self.pos_x, self.pos_y)

@@ -12,7 +12,7 @@ from landmark import Landmark
 
 class Particle(object):
     """Represents the robot and particles"""
-    TOL = 1E-5
+    TOL = 1E-4
 
     def __init__(self, is_robot=False):
         """pos_x: from left to right
@@ -27,22 +27,24 @@ class Particle(object):
         self.landmarks =[]
         self.set_noise()
         self.weight = 1
-        self.obs_noise = np.zeros((2,2))
+        # Model error term will relax the covariance matrix
+        self.obs_noise = np.array([[0.05, 0], [0, (3.0*math.pi/180)**2]])
 
     def pos(self):
         return (self.pos_x, self.pos_y)
 
     def set_noise(self):
         if self.is_robot:
+            # Measurement Noise will detect same feature at different place
             self.bearing_noise = 0
             self.distance_noise = 0
             self.motion_noise = 0
             self.turning_nosie = 0
         else:
-            self.bearing_noise = 50
-            self.distance_noise = 3
-            self.motion_noise = 0.1
-            self.turning_nosie = 5 # unit: degree
+            self.bearing_noise = 0
+            self.distance_noise = 0
+            self.motion_noise = 0
+            self.turning_nosie = 0 # unit: degree
 
     def set_pos(self, x, y, orien):
         """The arguments x, y are associated with the origin on the top left, we need to transform the coordinates
@@ -93,14 +95,10 @@ class Particle(object):
         """After the motion, update the weight of the particle and its EKFs based on the sensor data"""
         for o in obs:
             prob = 0
-            ass_obs = np.zeros((2,1))
-            ass_jacobian = np.zeros((2,2))
-            ass_adjcov = np.zeros((2,2))
-            landmark_idx = -1
             if self.landmarks:
                 # find the data association with ML
                 prob, landmark_idx, ass_obs, ass_jacobian, ass_adjcov = self.find_data_association(o)
-                if prob < TOL:
+                if prob < self.TOL:
                     # create new landmark
                     self.create_landmark(o)
                 else:
@@ -117,17 +115,39 @@ class Particle(object):
         Only for robot.
         Given the existing landmarks, generates a random number of obs (distance, direction)
         """
-        num_obs = random.randint(1, len(landmarks))
+        num_obs = random.randint(1, 1)
         obs_list = []
         for i in random.sample(range(len(landmarks)), num_obs):
             l = landmarks[i].pos()
+            # apply distance noise
             dis = euclidean_distance(l, (self.pos_x, self.pos_y))
-            noise = gauss_noise(0, self.distance_noise)
-            if (dis + noise) > 0:
-                dis += noise
-            direction = cal_direction((self.pos_x, self.pos_y), (l[0], l[1]))
+            dis = self.sense_distance(l)
+
+            # apply angle noise
+            direction = self.sense_direction(l)
             obs_list.append((dis, direction))
+            print "\nrobot sees %s with obs %s" % (str(l),str((dis, direction)))
         return obs_list
+
+    def sense_distance(self, landmark):
+        """Measures the distance between the robot and the landmark. Add noise"""
+        dis = euclidean_distance(landmark, (self.pos_x, self.pos_y))
+        noise = gauss_noise(0, self.distance_noise)
+        if (dis + noise) > 0:
+            dis += noise
+        return dis
+
+    def sense_direction(self, landmark):
+        """Measures the direction of the landmark with respect to robot. Add noise"""
+        direction = cal_direction((self.pos_x, self.pos_y), (landmark[0], landmark[1]))
+        angle_noise = gauss_noise(0, self.bearing_noise*math.pi/180)
+        if direction + angle_noise > math.pi:
+            result = direction + angle_noise - 2*math.pi
+        elif direction + angle_noise < - math.pi:
+            result = direction + angle_noise + 2*math.pi
+        else:
+            result = direction + angle_noise
+        return result
 
     def compute_jacobians(self, landmark):
         dx = landmark.pos_x - self.pos_x
@@ -135,7 +155,7 @@ class Particle(object):
         d2 = dx**2 + dy**2
         d = math.sqrt(d2)
 
-        predicted_obs = np.array([[d],[(math.atan2(dy, dx) + 2 * math.pi) % (2 * math.pi)]])
+        predicted_obs = np.array([[d],[math.atan2(dy, dx)]])
         jacobian = np.array([[dx/d,   dy/d],
                              [-dy/d2, dx/d2]])
         adj_cov = jacobian.dot(landmark.sig).dot(np.transpose(jacobian)) + self.obs_noise
@@ -158,6 +178,10 @@ class Particle(object):
         for idx, landmark in enumerate(self.landmarks):
             predicted_obs, jacobian, adj_cov = self.compute_jacobians(landmark)
             p = multi_normal(np.transpose(np.array([obs])), predicted_obs, adj_cov)
+            print("landmark: %s" % landmark)
+            print("predicted_obs: %s" % str(predicted_obs))
+            print("adj_cov: %s" % str(adj_cov))
+            print("prob: %s" % p)
             if p > prob:
                 prob = p
                 ass_obs = predicted_obs
@@ -167,7 +191,7 @@ class Particle(object):
         return prob, landmark_idx, ass_obs, ass_jacobian, ass_adjcov
 
     def create_landmark(self, obs):
-        landmark = guess_landmark(self.pos_x, self.pos_y, obs)
+        landmark = self.guess_landmark(obs)
         self.landmarks.append(landmark)
 
     def update_landmark(self, obs, landmark_idx, ass_obs, ass_jacobian, ass_adjcov):
