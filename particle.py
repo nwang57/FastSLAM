@@ -14,21 +14,21 @@ class Particle(object):
     """Represents the robot and particles"""
     TOL = 1E-4
 
-    def __init__(self, is_robot=False):
+    def __init__(self, x, y, orien, is_robot=False):
         """pos_x: from left to right
            pos_y: from up to down
            orientation: [0,2*pi)
         """
-        self.pos_x = random.random() * WINDOWWIDTH
-        self.pos_y = random.random() * WINDOWHEIGHT
-        self.orientation = random.random() * 2. * math.pi
+        self.pos_x = x
+        self.pos_y = y
+        self.orientation = orien
         self.dick_length = 10
         self.is_robot = is_robot
         self.landmarks =[]
         self.set_noise()
-        self.weight = 1
+        self.weight = 1.0
         # Model error term will relax the covariance matrix
-        self.obs_noise = np.array([[0.05, 0], [0, (3.0*math.pi/180)**2]])
+        self.obs_noise = np.array([[0.1, 0], [0, (3.0*math.pi/180)**2]])
 
     def pos(self):
         return (self.pos_x, self.pos_y)
@@ -36,15 +36,15 @@ class Particle(object):
     def set_noise(self):
         if self.is_robot:
             # Measurement Noise will detect same feature at different place
-            self.bearing_noise = 0
-            self.distance_noise = 0
-            self.motion_noise = 0
-            self.turning_nosie = 0
+            self.bearing_noise = 1
+            self.distance_noise = 0.1
+            self.motion_noise = 0.2
+            self.turning_nosie = 3
         else:
             self.bearing_noise = 0
             self.distance_noise = 0
-            self.motion_noise = 0
-            self.turning_nosie = 0 # unit: degree
+            self.motion_noise = 0.5
+            self.turning_nosie = 2 # unit: degree
 
     def set_pos(self, x, y, orien):
         """The arguments x, y are associated with the origin on the top left, we need to transform the coordinates
@@ -94,7 +94,7 @@ class Particle(object):
     def update(self, obs):
         """After the motion, update the weight of the particle and its EKFs based on the sensor data"""
         for o in obs:
-            prob = 0
+            prob = np.exp(-70)
             if self.landmarks:
                 # find the data association with ML
                 prob, landmark_idx, ass_obs, ass_jacobian, ass_adjcov = self.find_data_association(o)
@@ -107,7 +107,6 @@ class Particle(object):
             else:
                 # no initial landmarks
                 self.create_landmark(o)
-                # prob
             self.weight *= prob
 
     def sense(self, landmarks):
@@ -115,7 +114,7 @@ class Particle(object):
         Only for robot.
         Given the existing landmarks, generates a random number of obs (distance, direction)
         """
-        num_obs = random.randint(1, 1)
+        num_obs = 2
         obs_list = []
         for i in random.sample(range(len(landmarks)), num_obs):
             l = landmarks[i].pos()
@@ -178,10 +177,10 @@ class Particle(object):
         for idx, landmark in enumerate(self.landmarks):
             predicted_obs, jacobian, adj_cov = self.compute_jacobians(landmark)
             p = multi_normal(np.transpose(np.array([obs])), predicted_obs, adj_cov)
-            print("landmark: %s" % landmark)
-            print("predicted_obs: %s" % str(predicted_obs))
-            print("adj_cov: %s" % str(adj_cov))
-            print("prob: %s" % p)
+            # print("landmark: %s" % landmark)
+            # print("predicted_obs: %s" % str(predicted_obs))
+            # print("adj_cov: %s" % str(adj_cov))
+            # print("prob: %s" % p)
             if p > prob:
                 prob = p
                 ass_obs = predicted_obs
