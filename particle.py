@@ -38,13 +38,13 @@ class Particle(object):
             # Measurement Noise will detect same feature at different place
             self.bearing_noise = 1
             self.distance_noise = 0.1
-            self.motion_noise = 0.2
+            self.motion_noise = 1
             self.turning_nosie = 3
         else:
             self.bearing_noise = 0
             self.distance_noise = 0
-            self.motion_noise = 0.5
-            self.turning_nosie = 2 # unit: degree
+            self.motion_noise = 0
+            self.turning_nosie = 0 # unit: degree
 
     def set_pos(self, x, y, orien):
         """The arguments x, y are associated with the origin on the top left, we need to transform the coordinates
@@ -109,12 +109,11 @@ class Particle(object):
                 self.create_landmark(o)
             self.weight *= prob
 
-    def sense(self, landmarks):
+    def sense(self, landmarks, num_obs):
         """
         Only for robot.
         Given the existing landmarks, generates a random number of obs (distance, direction)
         """
-        num_obs = 2
         obs_list = []
         for i in random.sample(range(len(landmarks)), num_obs):
             l = landmarks[i].pos()
@@ -177,10 +176,6 @@ class Particle(object):
         for idx, landmark in enumerate(self.landmarks):
             predicted_obs, jacobian, adj_cov = self.compute_jacobians(landmark)
             p = multi_normal(np.transpose(np.array([obs])), predicted_obs, adj_cov)
-            # print("landmark: %s" % landmark)
-            # print("predicted_obs: %s" % str(predicted_obs))
-            # print("adj_cov: %s" % str(adj_cov))
-            # print("prob: %s" % p)
             if p > prob:
                 prob = p
                 ass_obs = predicted_obs

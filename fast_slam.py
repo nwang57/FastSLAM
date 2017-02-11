@@ -27,7 +27,7 @@ class FastSlam(object):
             key_pressed = self.world.pygame.key.get_pressed()
             if self.world.move_forward(key_pressed):
                 self.move_forward(2)
-                obs = self.robot.sense(self.world.landmarks)
+                obs = self.robot.sense(self.world.landmarks, 2)
                 for p in self.particles:
                     p.update(obs)
                 self.particles = self.resample_particles()
@@ -73,5 +73,5 @@ class FastSlam(object):
 
 if __name__=="__main__":
     random.seed(5)
-    simulator = FastSlam(80, 140, 0, particle_size=500)
+    simulator = FastSlam(80, 140, 0, particle_size=50)
     simulator.run_simulation()
