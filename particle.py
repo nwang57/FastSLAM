@@ -36,26 +36,25 @@ class Particle(object):
     def set_noise(self):
         if self.is_robot:
             # Measurement Noise will detect same feature at different place
-            self.bearing_noise = 1
+            self.bearing_noise = 0.1
             self.distance_noise = 0.1
-            self.motion_noise = 1
-            self.turning_nosie = 3
+            self.motion_noise = 0.5
+            self.turning_noise = 1
         else:
             self.bearing_noise = 0
             self.distance_noise = 0
             self.motion_noise = 0
-            self.turning_nosie = 0 # unit: degree
+            self.turning_noise = 0 # unit: degree
 
     def set_pos(self, x, y, orien):
-        """The arguments x, y are associated with the origin on the top left, we need to transform the coordinates
-        so that the origin is at bottom left.
+        """The arguments x, y are associated with the origin at the bottom left.
         """
         if x > WINDOWWIDTH:
             x = WINDOWWIDTH
         if y > WINDOWHEIGHT:
             y = WINDOWHEIGHT
         self.pos_x = x
-        self.pos_y = WINDOWHEIGHT - y
+        self.pos_y = y
         self.orientation = orien
 
     def reset_pos(self):
@@ -83,10 +82,10 @@ class Particle(object):
             self.pos_y = y
 
     def turn_left(self, angle):
-        self.orientation = (self.orientation + (angle + gauss_noise(0, self.turning_nosie)) / 180. * math.pi) % (2 * math.pi)
+        self.orientation = (self.orientation + (angle + gauss_noise(0, self.turning_noise)) / 180. * math.pi) % (2 * math.pi)
 
     def turn_right(self, angle):
-        self.orientation = (self.orientation - (angle + gauss_noise(0, self.turning_nosie)) / 180. * math.pi) % (2 * math.pi)
+        self.orientation = (self.orientation - (angle + gauss_noise(0, self.turning_noise)) / 180. * math.pi) % (2 * math.pi)
 
     def dick(self):
         return [(self.pos_x, self.pos_y), (self.pos_x + self.dick_length * math.cos(self.orientation), self.pos_y + self.dick_length * math.sin(self.orientation))]
@@ -124,7 +123,7 @@ class Particle(object):
             # apply angle noise
             direction = self.sense_direction(l)
             obs_list.append((dis, direction))
-            print "\nrobot sees %s with obs %s" % (str(l),str((dis, direction)))
+            #print "\nrobot %s sees %s with obs %s" % (str(self), str(l),str((dis, direction)))
         return obs_list
 
     def sense_distance(self, landmark):
@@ -194,6 +193,9 @@ class Particle(object):
         new_mu = landmark.mu + K.dot(obs - ass_obs)
         new_sig = (np.eye(2) - K.dot(ass_jacobian)).dot(landmark.sig)
         landmark.update(new_mu, new_sig)
+
+    def __str__(self):
+        return str((self.pos_x, self.pos_y, self.orientation, self.weight))
 
 
 

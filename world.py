@@ -30,7 +30,9 @@ class World(object):
         l2 = Landmark(25, 60)
         l3 = Landmark(100, 50)
         l4 = Landmark(110, 100)
-        self.landmarks = [l1, l2, l3, l4]
+        l5 = Landmark(160, 88)
+        l6 = Landmark(170, 180)
+        self.landmarks = [l1, l2, l3, l4, l5, l6]
 
     def draw(self, robot, particles, landmarks):
         """Draw the objects in the window"""

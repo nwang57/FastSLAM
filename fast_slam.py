@@ -73,5 +73,5 @@ class FastSlam(object):
 
 if __name__=="__main__":
     random.seed(5)
-    simulator = FastSlam(80, 140, 0, particle_size=50)
+    simulator = FastSlam(80, 140, 0, particle_size=200)
     simulator.run_simulation()
