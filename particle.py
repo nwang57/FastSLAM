@@ -14,7 +14,7 @@ class Particle(object):
     """Represents the robot and particles"""
     TOL = 1E-4
 
-    def __init__(self, x, y, orien, is_robot=False):
+    def __init__(self, x, y, orien, is_robot=True):
         """pos_x: from left to right
            pos_y: from up to down
            orientation: [0,2*pi)
@@ -24,11 +24,11 @@ class Particle(object):
         self.orientation = orien
         self.dick_length = 10
         self.is_robot = is_robot
-        self.landmarks =[]
         self.set_noise()
-        self.weight = 1.0
-        # Model error term will relax the covariance matrix
-        self.obs_noise = np.array([[0.1, 0], [0, (3.0*math.pi/180)**2]])
+        self.momentum = 0
+        self.last_orientation = None
+        self.gamma = 0
+
 
     def pos(self):
         return (self.pos_x, self.pos_y)
@@ -65,12 +65,27 @@ class Particle(object):
         if x >= WINDOWWIDTH or y >= WINDOWHEIGHT or x <=0 or y <= 0:
             return True
 
+    def update_momentum(self):
+        self.momentum -= 0.1
+        if self.momentum < 0:
+            self.momentum = 0
+        print(self.momentum)
+
+    def slow_down(self):
+        self.momentum -= 0.1
+        if self.momentum < 0:
+            self.momentum = 0
+        else:
+            self.forward(None)  
+
     def forward(self, d):
         """Motion model.
            Moves robot forward of distance d plus gaussian noise
         """
-        x = self.pos_x + d * math.cos(self.orientation) + gauss_noise(0, self.motion_noise)
-        y = self.pos_y + d * math.sin(self.orientation) + gauss_noise(0, self.motion_noise)
+        self.momentum += 0.01
+        self.momentum *= 1.01
+        x = self.pos_x + self.momentum * math.cos(self.orientation)# + gauss_noise(0, self.motion_noise)
+        y = self.pos_y + self.momentum * math.sin(self.orientation) + gauss_noise(0, self.motion_noise)
         if self.check_pos(x, y):
             if self.is_robot:
                 return

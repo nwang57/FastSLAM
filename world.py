@@ -34,16 +34,16 @@ class World(object):
         l6 = Landmark(170, 180)
         self.landmarks = [l1, l2, l3, l4, l5, l6]
 
-    def draw(self, robot, particles, landmarks):
+    def draw(self, robot):
         """Draw the objects in the window"""
         for landmark in self.landmarks:
             self.pygame.draw.circle(self.window, COLOR["green"], self.convert_coordinates(landmark.pos()), 3)
         self.pygame.draw.circle(self.window, COLOR["blue"], self.convert_coordinates(robot.pos()), 7)
         self.pygame.draw.line(self.window, COLOR["green"], *[self.convert_coordinates(pos) for pos in robot.dick()])
-        for p in particles:
-            self.pygame.draw.circle(self.window, COLOR["red"], self.convert_coordinates(p.pos()), 2)
-        for l in landmarks:
-            self.pygame.draw.circle(self.window, COLOR["purple"], self.convert_coordinates(l.pos()), 2)
+        # for p in particles:
+        #     self.pygame.draw.circle(self.window, COLOR["red"], self.convert_coordinates(p.pos()), 2)
+        # for l in landmarks:
+        #     self.pygame.draw.circle(self.window, COLOR["purple"], self.convert_coordinates(l.pos()), 2)
 
     def convert_coordinates(self, pos):
         """Change the origin from bottom left to top left"""
@@ -70,8 +70,8 @@ class World(object):
         """Test the motion command RIGHT"""
         return key_pressed[K_RIGHT]
 
-    def render(self, robot, particles, landmarks):
-        self.draw(robot, particles, landmarks)
+    def render(self, robot):
+        self.draw(robot)
         self.fpsClock.tick(FPS)
         self.pygame.display.update()
 

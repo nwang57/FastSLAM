@@ -16,7 +16,7 @@ class FastSlam2(FastSlam):
     """Inherit from FastSlam"""
     def __init__(self, x, y, orien, particle_size = 50):
         self.world = World()
-        self.particles = [Particle2(x, y, random.random()* 2.*math.pi) for i in xrange(particle_size)]
+        self.particles = [Particle2(x, y, random.random()* 2.*math.pi) for i in range(particle_size)]
         self.robot = Particle2(x, y, orien, is_robot=True)
         self.particle_size = particle_size
 
