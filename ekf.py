@@ -1,12 +1,13 @@
+#tryoing to fix sk
 import numpy as np
 
 class EKF:
     def __init__(self, init_x, init_y, init_yaw):
-        self.state = np.array([[init_x], [init_y], [init_yaw]])
-        self.P = np.array([[0.1, 0, 0], [0, 0.1, 0], [0, 0, 0.1]])
+        self.state = np.array([[init_x], [init_y], [init_yaw]]) # initial state
+        self.P = np.array([[0.1, 0, 0], [0, 0.1, 0], [0, 0, 0.1]]) # variance array
         self.noise = {'velocity': 0.2, 'yaw': 0.05, 'steer': 0.1, 'lidar': 0.5}
 
-        self.dt = 1
+        self.dt = 1 #timestamp
 
     def update(self, state_vec):
         measured_x, measured_y, measured_yaw, vel, gamma = state_vec
@@ -18,14 +19,16 @@ class EKF:
 
     
     def predict_step(self, control):
-        A = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        A = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]) #numbers of states
         B = self.getB()
 
         state = self.state
         p = self.P
 
         pred_state = A@state + B@control + self.get_control_noise()
-        pred_p = A@p@np.transpose(A) + abs(self.get_control_noise())
+        print('State estimate before ekf = {pred_state}')
+
+        pred_p = A@p@np.transpose(A) + abs(self.get_control_noise()) #pred state covarince
         
         return pred_state, pred_p
 
@@ -33,14 +36,20 @@ class EKF:
         x_pose, y_pose, yaw = measurement
         pred_state, pred_p = pred
 
-        H = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        H = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]) #measurement matrix 
+        #R_k = np.array([1,0,0], [0,1,0], [0,0,1]) #sensor measure noise covarince matrix
+
         z_k = np.array([[x_pose], [y_pose], [yaw]])
 
         y_k = z_k - H@pred_state
+
         S_k = H@pred_p@np.transpose(H) + abs(self.get_update_noise())
+
         print("S_k : ", S_k)
         print("det(S_k) : ", np.linalg.det(S_k))
-        K = pred_p@np.transpose(H)@np.linalg.inv(S_k)
+
+        K = pred_p@np.transpose(H)@np.linalg.pinv(S_k)
+
         print("K : ", K)
         update_state = pred_state + K@y_k
         update_p = (np.identity(3) - K@H)@pred_p
@@ -56,7 +65,7 @@ class EKF:
         v_noise2 = np.random.normal(loc=0.0, scale=self.noise['velocity'])
         steer_noise = np.random.normal(loc=0.0, scale=self.noise['steer'])
 
-        vec = [[v_noise1], [v_noise2], [steer_noise]]
+        vec = [[v_noise1], [v_noise2], [steer_noise]] #porcess noise
 
         return np.array(vec)
 
@@ -65,6 +74,6 @@ class EKF:
         y_pose_noise = np.random.normal(loc=0.0, scale=self.noise['lidar'])
         yaw_noise = np.random.normal(loc=0.0, scale=self.noise['steer'])
 
-        vec = [[x_pose_noise], [y_pose_noise], [yaw_noise]]
+        vec = [[x_pose_noise], [y_pose_noise], [yaw_noise]] #sesnor noise
 
         return np.array(vec)
