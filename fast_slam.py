@@ -41,10 +41,10 @@ class FastSlam(object):
                 self.slow_down()
             if self.world.turn_left(key_pressed):
                 self.turn_left(5)
-                self.gamma = 5
+                self.gamma = 5*(math.pi/180)
             elif self.world.turn_right(key_pressed):
                 self.turn_right(5)
-                self.gamma = -5
+                self.gamma = -5*(math.pi/180)
             else:
                 self.gamma = 0
 
@@ -57,17 +57,25 @@ class FastSlam(object):
 
             measured_x = self.robot.pos_x + np.random.normal(loc=0.0, scale=0.5)
             measured_y = self.robot.pos_y + np.random.normal(loc=0.0, scale=0.5)
-            measured_yaw = self.robot.pos_x + np.random.normal(loc=0.0, scale=0.05)
+            measured_yaw = self.robot.orientation + np.random.normal(loc=0.0, scale=0.02)
             measured_vel = self.robot.momentum + np.random.normal(loc=0.0, scale=0.2)
-            measured_gamma = self.gamma + np.random.normal(loc=0.0, scale=0.1)
+            measured_gamma = self.gamma# + np.random.normal(loc=0.0, scale=0.05)
+
+            measured_yaw = self.process_yaw(measured_yaw)
 
             state_vec = [measured_x, measured_y, measured_yaw, measured_vel, measured_gamma]
             filtered_state = self.ekf.update(state_vec)
             print("x, y : ", filtered_state[0][0], filtered_state[1][0])
-            print("yaw : ", filtered_state[2][0])
-            print("------------------------")
+            print("yaw: ", filtered_state[2][0])
+            # print("------------------------")
 
-
+    def process_yaw(self, yaw):
+        pi = 3.14159
+        if yaw > pi and yaw < pi*2:
+            return yaw - 2*pi
+        elif yaw > 2*pi:
+            return yaw - 2*pi
+        return yaw
 
     def move_forward(self, step):
         self.robot.forward(step)

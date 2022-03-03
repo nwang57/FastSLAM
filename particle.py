@@ -39,7 +39,7 @@ class Particle(object):
             self.bearing_noise = 0.1
             self.distance_noise = 0.1
             self.motion_noise = 0.5
-            self.turning_noise = 1
+            self.turning_noise = 0
         else:
             self.bearing_noise = 0
             self.distance_noise = 0
