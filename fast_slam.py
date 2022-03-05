@@ -24,6 +24,7 @@ class FastSlam(object):
         self.robot = Particle(x, y, orien, is_robot=True)
         self.particle_size = particle_size
         self.gamma = 0
+        self.prev = 0
 
     def run_simulation(self):
         while True:
@@ -66,9 +67,8 @@ class FastSlam(object):
             state_vec = [measured_x, measured_y, measured_yaw, measured_vel, measured_gamma]
             filtered_state = self.ekf.update(state_vec)
 
-            print("Filtered State : ", filtered_state)
-            print("x, y : ", filtered_state[0][0], filtered_state[1][0])
-            print("yaw: ", filtered_state[2][0])
+            print("x, y : ", filtered_state[0], filtered_state[1])
+            print("yaw: ", filtered_state[2])
             print("------------------------")
 
     def process_yaw(self, yaw):
