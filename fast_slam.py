@@ -67,8 +67,10 @@ class FastSlam(object):
             state_vec = [measured_x, measured_y, measured_yaw, measured_vel, measured_gamma]
             filtered_state = self.ekf.update(state_vec)
 
-            print("x, y : ", filtered_state[0], filtered_state[1])
-            print("yaw: ", filtered_state[2])
+            print("Error x : ", abs(filtered_state[0] - self.robot.pos_x))
+            print("Error y : ", abs(filtered_state[1] - self.robot.pos_y))
+            # print("x, y : ", filtered_state[0], filtered_state[1])
+            # print("yaw: ", filtered_state[2])
             print("------------------------")
 
     def process_yaw(self, yaw):
