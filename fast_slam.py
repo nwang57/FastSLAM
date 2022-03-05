@@ -55,19 +55,21 @@ class FastSlam(object):
             # print("x, y : ", self.robot.pos_x, self.robot.pos_y)
             # print("yaw : ", self.robot.orientation)
 
-            measured_x = self.robot.pos_x + np.random.normal(loc=0.0, scale=0.5)
-            measured_y = self.robot.pos_y + np.random.normal(loc=0.0, scale=0.5)
-            measured_yaw = self.robot.orientation + np.random.normal(loc=0.0, scale=0.02)
-            measured_vel = self.robot.momentum + np.random.normal(loc=0.0, scale=0.2)
+            measured_x = self.robot.pos_x + np.random.normal(loc=0.0, scale=0.05)
+            measured_y = self.robot.pos_y + np.random.normal(loc=0.0, scale=0.05)
+            measured_yaw = self.robot.orientation + np.random.normal(loc=0.0, scale=0.002)
+            measured_vel = self.robot.momentum + np.random.normal(loc=0.0, scale=0.02)
             measured_gamma = self.gamma# + np.random.normal(loc=0.0, scale=0.05)
 
             measured_yaw = self.process_yaw(measured_yaw)
 
             state_vec = [measured_x, measured_y, measured_yaw, measured_vel, measured_gamma]
             filtered_state = self.ekf.update(state_vec)
+
+            print("Filtered State : ", filtered_state)
             print("x, y : ", filtered_state[0][0], filtered_state[1][0])
             print("yaw: ", filtered_state[2][0])
-            # print("------------------------")
+            print("------------------------")
 
     def process_yaw(self, yaw):
         pi = 3.14159
